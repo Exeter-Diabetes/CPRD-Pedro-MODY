@@ -99,3 +99,37 @@ predict.T1D <- function(object, newdata, parms, ...) {
   colnames(preds) <- NULL
   preds
 }
+
+
+## Prediction function for MODY T2D
+
+### predict method for 'post' objects
+predict.T2D <- function(object, newdata, ...) {
+  
+  ## check input objects
+  stopifnot(class(object) == "T2D")
+  stopifnot(is.data.frame(newdata))
+  stopifnot(c("agedx", "bmi", "hba1c", "pardm", "agerec", "insoroha", "sex") %in% colnames(newdata))
+  x <- select(newdata, one_of(c("agedx", "bmi", "hba1c", "pardm", "agerec", "insoroha", "sex")))
+  stopifnot(all(map_chr(x, class) == "numeric"))
+  
+  ## convert posterior samples to matrix
+  post <- as.matrix(object$post)
+  
+  ## set up data
+  x <- as.matrix(x)
+  x <- cbind(int = rep(1, nrow(x)), x)
+  betas <- post[, match(c("beta0", paste0("beta[", 1:(ncol(x) - 1), "]")), colnames(post))]
+  betas <- x %*% t(betas)
+  
+  ## do predictions ignoring tests
+  preds <- t(t(betas) * post[, "gamma1"])
+  preds <- t(t(preds) + post[, "gamma0"])
+  preds <- exp(preds) / (1 + exp(preds))
+  
+  ## return posterior predictive samples
+  preds <- t(preds)
+  colnames(preds) <- NULL
+  preds
+}
+
