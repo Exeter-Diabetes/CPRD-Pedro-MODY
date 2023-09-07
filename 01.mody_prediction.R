@@ -15,10 +15,10 @@ require(tidyverse)
 #:---------------------------------------------------------
 
 # load dataset - modyt1d_cohort_local
-load("/slade/CPRD_data/mastermind_2022/Katie HF/pedro_modyt1d_cohort.Rda")
-  
+load("/slade/CPRD_data/Katie Pedro MODY/pedro_mody_cohort.Rda")
+
 ## remove those with missing bmi, hba1c
-modyt1d_cohort_local_clean <- modyt1d_cohort_local %>%
+modyt1d_cohort_local_clean <- pedro_mody_cohort_local %>%
   drop_na(bmi, hba1c)
 
 
@@ -101,6 +101,7 @@ final_T1D_predictions <- final_T1D_predictions %>%
 #:------------------
 dir.create("Patient Predictions")
 saveRDS(final_T1D_predictions, "Patient Predictions/T1D_predictions.rds")
+saveRDS(final_T1D_predictions, "/slade/CPRD_data/Katie Pedro MODY/T1D_predictions.rds")
 
 
 
@@ -164,6 +165,7 @@ final_T2D_predictions <- final_T2D_predictions %>%
 #:------------------
 dir.create("Patient Predictions")
 saveRDS(final_T2D_predictions, "Patient Predictions/T2D_predictions.rds")
+saveRDS(final_T2D_predictions, "/slade/CPRD_data/Katie Pedro MODY/T2D_predictions.rds")
 
 
 
