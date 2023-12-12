@@ -61,7 +61,11 @@ predict.T1D <- function(object, newdata, parms, ...) {
     preds_T <- preds[!is.na(newdata$T),]
     
     # add predictions weighted by variable T
-    pT <- matrix(T, ncol = 1) %*% t(post[, "pMp_Cn_or_Ap"]) + matrix(replicate(ncol(preds_T), 1 - T), ncol = ncol(preds_T)) * preds_T
+    if (is.null(ncol(preds_T))) {
+      pT <- matrix(T, ncol = 1) %*% t(post[, "pMp_Cn_or_Ap"]) + as.vector(1 - T) * preds_T
+    } else {
+      pT <- matrix(T, ncol = 1) %*% t(post[, "pMp_Cn_or_Ap"]) + matrix(replicate(ifelse(is.null(ncol(preds_T)), 1, ncol(preds_T)), 1 - T), ncol = ifelse(is.null(ncol(preds_T)), 1, ncol(preds_T))) * preds_T
+    }
     
     # replace new probability calculations
     preds[!is.na(newdata$T)] <- pT
