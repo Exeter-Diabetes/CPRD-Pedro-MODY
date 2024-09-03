@@ -10,12 +10,12 @@
 
 # load libraries
 require(tidyverse)
-
+require(nimble)
 
 #:---------------------------------------------------------
 
 # load dataset - modyt1d_cohort_local
-load("/slade/CPRD_data/Katie Pedro MODY/pedro_mody_cohort.Rda")
+load("/slade/CPRD_data/Katie Pedro MODY/pedro_mody_cohort_2024_v2.Rda")
 
 ## remove those with missing bmi, hba1c
 modyt1d_cohort_local_clean <- pedro_mody_cohort_local %>%
@@ -24,6 +24,9 @@ modyt1d_cohort_local_clean <- pedro_mody_cohort_local %>%
 
 #:---------------------------------------------------------
 
+setwd("CPRD_MODY")
+
+#:---------------------------------------------------------
 # load functions to make predictions from models
 source("00.prediction_functions.R")
 
@@ -49,14 +52,16 @@ final_T1D_predictions <- data.frame(
   patid = modyt1d_cohort_local_clean$patid
 )
 
+#:------------------
+
+#:---- Ignore biomarker info
 
 #:------------------
 # If pardm is missing, set to 0
 newdata_predictions <- modyt1d_cohort_local_clean %>% 
-  mutate(pardm = ifelse(is.na(pardm), 0, pardm))
+  mutate(pardm = ifelse(is.na(pardm), 0, pardm), C = as.numeric(NA), A = as.numeric(NA))
 
-newdata_predictions_x <- as_tibble(as.matrix(select(newdata_predictions, pardm, agerec, hba1c, agedx, sex, bmi)))
-newdata_predictions_x$T <- NA
+newdata_predictions_x <- as_tibble(as.matrix(select(newdata_predictions, pardm, agerec, hba1c, agedx, sex, bmi, C, A)))
 
 predictions_T1D_pardm_0 <- predict(posterior_samples_T1D_obj, newdata_predictions_x, rcs_parms) %>%
   apply(., 2, function(x) {
@@ -100,11 +105,8 @@ final_T1D_predictions <- final_T1D_predictions %>%
 
 #:------------------
 dir.create("Patient Predictions")
-saveRDS(final_T1D_predictions, "Patient Predictions/T1D_predictions.rds")
-saveRDS(final_T1D_predictions, "/slade/CPRD_data/Katie Pedro MODY/T1D_predictions.rds")
-
-
-
+saveRDS(final_T1D_predictions, "Patient Predictions/T1D_predictions_no_T.rds")
+# saveRDS(final_T1D_predictions, "/slade/CPRD_data/Katie Pedro MODY/T1D_predictions_no_T.rds")
 
 
 #:---------------------------------------------------------
@@ -165,7 +167,7 @@ final_T2D_predictions <- final_T2D_predictions %>%
 #:------------------
 dir.create("Patient Predictions")
 saveRDS(final_T2D_predictions, "Patient Predictions/T2D_predictions.rds")
-saveRDS(final_T2D_predictions, "/slade/CPRD_data/Katie Pedro MODY/T2D_predictions.rds")
+# saveRDS(final_T2D_predictions, "/slade/CPRD_data/Katie Pedro MODY/T2D_predictions.rds")
 
 
 
