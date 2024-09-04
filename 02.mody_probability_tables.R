@@ -254,7 +254,7 @@ mody_prob_CPRD <- modyt1d_cohort_local_clean %>%
   left_join(
     T1D_predictions_old %>%
       # create final probability = average of pardm = 1 and pardm = 0
-      mutate(mean_T1D_final = (mean_pardm_0 + mean_pardm_1)/2) %>%
+      mutate(mean_T1D_final = mean_pardm_0) %>%
       select(patid, mean_T1D_final),
     by = c("patid")
   ) %>%
@@ -262,7 +262,7 @@ mody_prob_CPRD <- modyt1d_cohort_local_clean %>%
   left_join(
     T2D_predictions_old %>%
       # create final probability = average of pardm = 1 and pardm = 0
-      mutate(mean_T2D_final = (mean_pardm_0 + mean_pardm_1)/2) %>%
+      mutate(mean_T2D_final = mean_pardm_0) %>%
       select(patid, mean_T2D_final),
     by = c("patid")
   ) %>%
@@ -274,7 +274,7 @@ mody_prob_CPRD <- modyt1d_cohort_local_clean %>%
   left_join(
     T1D_predictions_no_T %>%
       # create final probability = average of pardm = 1 and pardm = 0
-      mutate(mean_T1D_final = (mean_pardm_0 + mean_pardm_1)/2) %>%
+      mutate(mean_T1D_final = mean_pardm_0) %>%
       select(patid, mean_T1D_final),
     by = c("patid")
   ) %>%
@@ -282,7 +282,7 @@ mody_prob_CPRD <- modyt1d_cohort_local_clean %>%
   left_join(
     T2D_predictions %>%
       # create final probability = average of pardm = 1 and pardm = 0
-      mutate(mean_T2D_final = (mean_pardm_0 + mean_pardm_1)/2) %>%
+      mutate(mean_T2D_final = mean_pardm_0) %>%
       select(patid, mean_T2D_final),
     by = c("patid")
   ) %>%
