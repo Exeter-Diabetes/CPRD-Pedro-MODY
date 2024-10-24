@@ -11,17 +11,75 @@
 
 # load libraries
 require(tidyverse)
+require(aurum)
 
-# load dataset - modyt1d_cohort_local
-load("/slade/CPRD_data/Katie Pedro MODY/pedro_mody_cohort_2024_v2.Rda")
+cprd = CPRDData$new(cprdEnv = "diabetes-jun2024",cprdConf = "~/.aurum.yaml")
+
+analysis = cprd$analysis("dpctn_final")
+
+pedro_mody_cohort <- cohort %>%
+  analysis$cached("pedro_mody_cohort_v3", unique_indexes="patid")
+
+pedro_mody_cohort_local <- pedro_mody_cohort %>% collect() %>% mutate(patid=as.character(patid))
 
 ## remove those with missing bmi, hba1c
 modyt1d_cohort_local_clean <- pedro_mody_cohort_local %>%
   drop_na(bmi, hba1c)
 
+
+## split between calculators
+modyt1d_cohort_local_type1 <- pedro_mody_cohort_local %>%
+  filter(which_equation == "t1")
+
+# nrow(modyt1d_cohort_local_type1) # 40985
+
+modyt1d_cohort_local_type2 <- pedro_mody_cohort_local %>%
+  filter(which_equation == "t2")
+
+# nrow(modyt1d_cohort_local_type2) # 50707
+
+
+## only keep white ethnicity
+modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
+  filter(ethnicity_5cat == "0")
+
+# nrow(modyt1d_cohort_local_type1) # 35370
+
+modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
+  filter(ethnicity_5cat == "0")
+
+# nrow(modyt1d_cohort_local_type2) # 28188
+
+
+## only keep complete data (ignore parent history of diabetes)
+modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
+  drop_na(bmi, hba1c)
+
+# nrow(modyt1d_cohort_local_type1) # 33989
+
+modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
+  drop_na(bmi, hba1c)
+
+# nrow(modyt1d_cohort_local_type2) # 26896
+
+
+## only keep <35y
+modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
+  filter(agedx < 35)
+
+# nrow(modyt1d_cohort_local_type1) # 33273
+
+modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
+  filter(agedx < 35)
+
+# nrow(modyt1d_cohort_local_type2) # 23575
+
+
+
+
 # load calculator predictions
-T1D_predictions_no_T <- readRDS("CPRD_MODY/Patient Predictions/T1D_predictions_no_T.rds")
-T2D_predictions <- readRDS("CPRD_MODY/Patient Predictions/T2D_predictions.rds")
+T1D_predictions_no_T <- readRDS("Patient Predictions/T1D_predictions_no_T.rds")
+T2D_predictions <- readRDS("Patient Predictions/T2D_predictions.rds")
 
 
 #############################################
@@ -92,12 +150,12 @@ convert <- tibble(
 )
 
 ## Old calculator
-posteriors_samples_old_T1D <- readRDS("CPRD_MODY/model_posteriors/type_1_old_model_posteriors.rds")
+posteriors_samples_old_T1D <- readRDS("model_posteriors/type_1_old_model_posteriors.rds")
 ### create object to use for prediction
 posteriors_samples_old_T1D <- list(post = posteriors_samples_old_T1D$samples)
 class(posteriors_samples_old_T1D) <- "old_calculator_T1D"
 
-posteriors_samples_old_T2D <- readRDS("CPRD_MODY/model_posteriors/type_2_old_model_posteriors.rds")
+posteriors_samples_old_T2D <- readRDS("model_posteriors/type_2_old_model_posteriors.rds")
 ### create object to use for prediction
 posteriors_samples_old_T2D <- list(post = posteriors_samples_old_T2D$samples)
 class(posteriors_samples_old_T2D) <- "old_calculator_T2D"
@@ -247,80 +305,58 @@ T2D_predictions_old <- final_T2D_predictions
 ## Creating tables needed
 
 ## Take the original dataset and keep patid and calculator needed + agedx
-
-mody_prob_CPRD <- modyt1d_cohort_local_clean %>%
-  select(patid, diabetes_type, agedx) %>%
-  # join old calculator probability T1D
+mody_prob_CPRD <- modyt1d_cohort_local_type1 %>%
+  select(patid, which_equation, agedx) %>%
   left_join(
     T1D_predictions_old %>%
       # create final probability = average of pardm = 1 and pardm = 0
       mutate(mean_T1D_final = mean_pardm_0) %>%
-      select(patid, mean_T1D_final),
+      select(patid, mean_T1D_final) %>%
+      rename("old_prob" = "mean_T1D_final"),
     by = c("patid")
   ) %>%
-  # join old calculator probability T2D
-  left_join(
-    T2D_predictions_old %>%
-      # create final probability = average of pardm = 1 and pardm = 0
-      mutate(mean_T2D_final = mean_pardm_0) %>%
-      select(patid, mean_T2D_final),
-    by = c("patid")
-  ) %>%
-  # select the right calculator for each patient
-  mutate(old_prob = ifelse(grepl('type 1',diabetes_type), mean_T1D_final, mean_T2D_final)) %>%
-  # keep only important columns
-  select(patid, diabetes_type, agedx, old_prob) %>%
-  # join new calculator probability T1D
   left_join(
     T1D_predictions_no_T %>%
       # create final probability = average of pardm = 1 and pardm = 0
       mutate(mean_T1D_final = mean_pardm_0) %>%
-      select(patid, mean_T1D_final),
+      select(patid, mean_T1D_final) %>%
+      rename("new_prob" = "mean_T1D_final"),
     by = c("patid")
   ) %>%
-  # join new calculator probability T2D
-  left_join(
-    T2D_predictions %>%
-      # create final probability = average of pardm = 1 and pardm = 0
-      mutate(mean_T2D_final = mean_pardm_0) %>%
-      select(patid, mean_T2D_final),
-    by = c("patid")
-  ) %>%
-  # select the right calculator for each patient
-  mutate(new_prob = ifelse(grepl('type 1',diabetes_type), mean_T1D_final, mean_T2D_final)) %>%
-  # keep only important columns
-  select(patid, diabetes_type, agedx, old_prob, new_prob) %>%
-  # simpler version of which calculator
-  mutate(which_eq = ifelse(grepl('type 1',diabetes_type), "t1d", "t2d")) %>%
-  select(-diabetes_type)
-  
+  rbind(
+    modyt1d_cohort_local_type2 %>%
+      select(patid, which_equation, agedx) %>%
+      left_join(
+        T2D_predictions_old %>%
+          # create final probability = average of pardm = 1 and pardm = 0
+          mutate(mean_T2D_final = mean_pardm_0) %>%
+          select(patid, mean_T2D_final) %>%
+          rename("old_prob" = "mean_T2D_final"),
+        by = c("patid")
+      ) %>%
+      left_join(
+        T2D_predictions %>%
+          # create final probability = average of pardm = 1 and pardm = 0
+          mutate(mean_T2D_final = mean_pardm_0) %>%
+          select(patid, mean_T2D_final) %>%
+          rename("new_prob" = "mean_T2D_final"),
+        by = c("patid")
+      )
+  )
+
 
 ## under 35s table
 under_35 <- mody_prob_CPRD %>%
-  select(which_eq, old_prob, new_prob)
+  select(which_equation, old_prob, new_prob)
 
-write.table(under_35, file = "CPRD_MODY/Patient Predictions/mody_probabilities_under_35s.txt", sep = "\t",
+write.table(under_35, file = "Patient Predictions/mody_probabilities_under_35s.txt", sep = "\t",
             row.names = FALSE)
 
 ## under 30s table
 under_30 <- mody_prob_CPRD %>%
   filter(agedx < 30) %>%
-  select(which_eq, old_prob, new_prob)
+  select(which_equation, old_prob, new_prob)
 
-write.table(under_30, file = "CPRD_MODY/Patient Predictions/mody_probabilities_under_30s.txt", sep = "\t",
+write.table(under_30, file = "Patient Predictions/mody_probabilities_under_30s.txt", sep = "\t",
             row.names = FALSE)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
