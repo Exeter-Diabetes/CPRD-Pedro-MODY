@@ -14,17 +14,21 @@ require(nimble)
 
 #:---------------------------------------------------------
 
-# load dataset - modyt1d_cohort_local
-load("/slade/CPRD_data/Katie Pedro MODY/pedro_mody_cohort_2024_v2.Rda")
+require(aurum)
+
+cprd = CPRDData$new(cprdEnv = "diabetes-jun2024",cprdConf = "~/.aurum.yaml")
+
+analysis = cprd$analysis("dpctn_final")
+
+pedro_mody_cohort <- cohort %>%
+  analysis$cached("pedro_mody_cohort_v3", unique_indexes="patid")
+
+pedro_mody_cohort_local <- pedro_mody_cohort %>% collect() %>% mutate(patid=as.character(patid))
 
 ## remove those with missing bmi, hba1c
 modyt1d_cohort_local_clean <- pedro_mody_cohort_local %>%
   drop_na(bmi, hba1c)
 
-
-#:---------------------------------------------------------
-
-setwd("CPRD_MODY")
 
 #:---------------------------------------------------------
 # load functions to make predictions from models
@@ -85,7 +89,8 @@ newdata_predictions <- modyt1d_cohort_local_clean %>%
   mutate(pardm = ifelse(is.na(pardm), 1, pardm))
 
 newdata_predictions_x <- as_tibble(as.matrix(select(newdata_predictions, pardm, agerec, hba1c, agedx, sex, bmi)))
-newdata_predictions_x$T <- NA
+newdata_predictions_x$C <- NA
+newdata_predictions_x$A <- NA
 
 predictions_T1D_pardm_1 <- predict(posterior_samples_T1D_obj, newdata_predictions_x, rcs_parms) %>%
   apply(., 2, function(x) {
@@ -106,7 +111,6 @@ final_T1D_predictions <- final_T1D_predictions %>%
 #:------------------
 dir.create("Patient Predictions")
 saveRDS(final_T1D_predictions, "Patient Predictions/T1D_predictions_no_T.rds")
-# saveRDS(final_T1D_predictions, "/slade/CPRD_data/Katie Pedro MODY/T1D_predictions_no_T.rds")
 
 
 #:---------------------------------------------------------
@@ -167,13 +171,4 @@ final_T2D_predictions <- final_T2D_predictions %>%
 #:------------------
 dir.create("Patient Predictions")
 saveRDS(final_T2D_predictions, "Patient Predictions/T2D_predictions.rds")
-# saveRDS(final_T2D_predictions, "/slade/CPRD_data/Katie Pedro MODY/T2D_predictions.rds")
-
-
-
-
-
-
-
-
 
