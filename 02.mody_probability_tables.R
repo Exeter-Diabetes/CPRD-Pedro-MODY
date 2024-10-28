@@ -18,7 +18,7 @@ cprd = CPRDData$new(cprdEnv = "diabetes-jun2024",cprdConf = "~/.aurum.yaml")
 analysis = cprd$analysis("dpctn_final")
 
 pedro_mody_cohort <- cohort %>%
-  analysis$cached("pedro_mody_cohort_v3", unique_indexes="patid")
+  analysis$cached("pedro_mody_cohort", unique_indexes="patid")
 
 pedro_mody_cohort_local <- pedro_mody_cohort %>% collect() %>% mutate(patid=as.character(patid))
 
@@ -36,7 +36,7 @@ modyt1d_cohort_local_type1 <- pedro_mody_cohort_local %>%
 modyt1d_cohort_local_type2 <- pedro_mody_cohort_local %>%
   filter(which_equation == "t2")
 
-# nrow(modyt1d_cohort_local_type2) # 50707
+# nrow(modyt1d_cohort_local_type2) # 50713
 
 
 ## only keep white ethnicity
@@ -48,7 +48,7 @@ modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
 modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
   filter(ethnicity_5cat == "0")
 
-# nrow(modyt1d_cohort_local_type2) # 28188
+# nrow(modyt1d_cohort_local_type2) # 28192
 
 
 ## only keep complete data (ignore parent history of diabetes)
@@ -60,19 +60,19 @@ modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
 modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
   drop_na(bmi, hba1c)
 
-# nrow(modyt1d_cohort_local_type2) # 26896
+# nrow(modyt1d_cohort_local_type2) # 26898
 
 
 ## only keep <35y
 modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
   filter(agedx < 35)
 
-# nrow(modyt1d_cohort_local_type1) # 33273
+nrow(modyt1d_cohort_local_type1) # 33273
 
 modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
   filter(agedx < 35)
 
-# nrow(modyt1d_cohort_local_type2) # 23575
+nrow(modyt1d_cohort_local_type2) # 23576
 
 
 
