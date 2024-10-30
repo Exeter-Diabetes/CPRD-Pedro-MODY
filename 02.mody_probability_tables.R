@@ -31,48 +31,48 @@ modyt1d_cohort_local_clean <- pedro_mody_cohort_local %>%
 modyt1d_cohort_local_type1 <- pedro_mody_cohort_local %>%
   filter(which_equation == "t1")
 
-# nrow(modyt1d_cohort_local_type1) # 40985
+# nrow(modyt1d_cohort_local_type1) # 42575
 
 modyt1d_cohort_local_type2 <- pedro_mody_cohort_local %>%
   filter(which_equation == "t2")
 
-# nrow(modyt1d_cohort_local_type2) # 50713
+# nrow(modyt1d_cohort_local_type2) # 63636
 
 
 ## only keep white ethnicity
 modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
   filter(ethnicity_5cat == "0")
 
-# nrow(modyt1d_cohort_local_type1) # 35370
+# nrow(modyt1d_cohort_local_type1) # 36456
 
 modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
   filter(ethnicity_5cat == "0")
 
-# nrow(modyt1d_cohort_local_type2) # 28192
+# nrow(modyt1d_cohort_local_type2) # 34063
 
 
 ## only keep complete data (ignore parent history of diabetes)
 modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
   drop_na(bmi, hba1c)
 
-# nrow(modyt1d_cohort_local_type1) # 33989
+# nrow(modyt1d_cohort_local_type1) # 35150
 
 modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
   drop_na(bmi, hba1c)
 
-# nrow(modyt1d_cohort_local_type2) # 26898
+# nrow(modyt1d_cohort_local_type2) # 32677
 
 
 ## only keep <35y
 modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
   filter(agedx < 35)
 
-nrow(modyt1d_cohort_local_type1) # 33273
+# nrow(modyt1d_cohort_local_type1) # 34473
 
 modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
   filter(agedx < 35)
 
-nrow(modyt1d_cohort_local_type2) # 23576
+# nrow(modyt1d_cohort_local_type2) # 28652
 
 
 
