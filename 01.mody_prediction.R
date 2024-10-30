@@ -21,7 +21,7 @@ cprd = CPRDData$new(cprdEnv = "diabetes-jun2024",cprdConf = "~/.aurum.yaml")
 analysis = cprd$analysis("dpctn_final")
 
 pedro_mody_cohort <- cohort %>%
-  analysis$cached("pedro_mody_cohort", unique_indexes="patid")
+  analysis$cached("pedro_mody_cohort_24", unique_indexes="patid")
 
 pedro_mody_cohort_local <- pedro_mody_cohort %>% collect() %>% mutate(patid=as.character(patid))
 
