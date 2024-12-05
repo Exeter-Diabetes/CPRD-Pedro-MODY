@@ -65,14 +65,14 @@ modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
 
 ## only keep <35y
 modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
-  filter(agedx < 35)
+  filter(agedx <= 35)
 
-# nrow(modyt1d_cohort_local_type1) # 34473
+# nrow(modyt1d_cohort_local_type1) # 34530
 
 modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
-  filter(agedx < 35)
+  filter(agedx <= 35)
 
-# nrow(modyt1d_cohort_local_type2) # 28652
+# nrow(modyt1d_cohort_local_type2) # 28992
 
 
 
