@@ -22,57 +22,46 @@ pedro_mody_cohort <- cohort %>%
 
 pedro_mody_cohort_local <- pedro_mody_cohort %>% collect() %>% mutate(patid=as.character(patid))
 
-## remove those with missing bmi, hba1c
-modyt1d_cohort_local_clean <- pedro_mody_cohort_local %>%
-  drop_na(bmi, hba1c)
 
+## remove patients unable to categorise
+pedro_mody_cohort_local <- pedro_mody_cohort_local %>%
+  drop_na(which_equation)
 
-## split between calculators
-modyt1d_cohort_local_type1 <- pedro_mody_cohort_local %>%
+nrow(pedro_mody_cohort_local) # 106211
+
+modyt1d_cohort_local <- pedro_mody_cohort_local %>%
   filter(which_equation == "t1")
 
-# nrow(modyt1d_cohort_local_type1) # 42575
+nrow(modyt1d_cohort_local) # 42575
 
-modyt1d_cohort_local_type2 <- pedro_mody_cohort_local %>%
+modyt2d_cohort_local <- pedro_mody_cohort_local %>%
   filter(which_equation == "t2")
 
-# nrow(modyt1d_cohort_local_type2) # 63636
+nrow(modyt2d_cohort_local) # 63636
 
 
 ## only keep white ethnicity
-modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
+modyt1d_cohort_local <- modyt1d_cohort_local %>%
   filter(ethnicity_5cat == "0")
 
-# nrow(modyt1d_cohort_local_type1) # 36456
+nrow(modyt1d_cohort_local) # 36456
 
-modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
+modyt2d_cohort_local <- modyt2d_cohort_local %>%
   filter(ethnicity_5cat == "0")
 
-# nrow(modyt1d_cohort_local_type2) # 34063
+nrow(modyt2d_cohort_local) # 34063
 
 
-## only keep complete data (ignore parent history of diabetes)
-modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
+## remove missing vars
+modyt1d_cohort_local <- modyt1d_cohort_local %>%
   drop_na(bmi, hba1c)
 
-# nrow(modyt1d_cohort_local_type1) # 35150
+nrow(modyt1d_cohort_local) # 35150
 
-modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
+modyt2d_cohort_local <- modyt2d_cohort_local %>%
   drop_na(bmi, hba1c)
 
-# nrow(modyt1d_cohort_local_type2) # 32677
-
-
-## only keep <35y
-modyt1d_cohort_local_type1 <- modyt1d_cohort_local_type1 %>%
-  filter(agedx <= 35)
-
-# nrow(modyt1d_cohort_local_type1) # 34530
-
-modyt1d_cohort_local_type2 <- modyt1d_cohort_local_type2 %>%
-  filter(agedx <= 35)
-
-# nrow(modyt1d_cohort_local_type2) # 28992
+nrow(modyt2d_cohort_local) # 32677
 
 
 
@@ -165,10 +154,10 @@ class(posteriors_samples_old_T2D) <- "old_calculator_T2D"
 
 ## make predictions for T1D MODY (missingness is in pardm)
 final_T1D_predictions <- data.frame(
-  patid = modyt1d_cohort_local_clean$patid
+  patid = modyt1d_cohort_local$patid
 )
 
-interim <- as_tibble(as.matrix(select(modyt1d_cohort_local_clean, pardm, agerec, hba1c, agedx, sex))) %>%
+interim <- as_tibble(as.matrix(select(modyt1d_cohort_local, pardm, agerec, hba1c, agedx, sex))) %>%
   mutate(pardm = ifelse(is.na(pardm), 0, pardm))
 
 T1D_predictions_old <- predict(posteriors_samples_old_T1D, interim) %>%
@@ -191,14 +180,14 @@ final_T1D_predictions <- final_T1D_predictions %>%
   left_join(
     T1D_predictions_old %>%
       cbind(
-        patid = modyt1d_cohort_local_clean$patid
+        patid = modyt1d_cohort_local$patid
       ) %>%
       set_names(c("mean_pardm_0", "patid"))
   )
 
 
 
-interim <- as_tibble(as.matrix(select(modyt1d_cohort_local_clean, pardm, agerec, hba1c, agedx, sex))) %>%
+interim <- as_tibble(as.matrix(select(modyt1d_cohort_local, pardm, agerec, hba1c, agedx, sex))) %>%
   mutate(pardm = ifelse(is.na(pardm), 1, pardm))
 
 T1D_predictions_old <- predict(posteriors_samples_old_T1D, interim) %>%
@@ -221,7 +210,7 @@ final_T1D_predictions <- final_T1D_predictions %>%
   left_join(
     T1D_predictions_old %>%
       cbind(
-        patid = modyt1d_cohort_local_clean$patid
+        patid = modyt1d_cohort_local$patid
       ) %>%
       set_names(c("mean_pardm_1", "patid"))
   )
@@ -234,10 +223,10 @@ T1D_predictions_old <- final_T1D_predictions
 
 ## make predictions for T1D MODY (missingness is in pardm)
 final_T2D_predictions <- data.frame(
-  patid = modyt1d_cohort_local_clean$patid
+  patid = modyt2d_cohort_local$patid
 )
 
-interim <- as_tibble(as.matrix(select(modyt1d_cohort_local_clean, agedx, bmi, hba1c, pardm, agerec, insoroha, sex))) %>%
+interim <- as_tibble(as.matrix(select(modyt2d_cohort_local, agedx, bmi, hba1c, pardm, agerec, insoroha, sex))) %>%
   mutate(pardm = ifelse(is.na(pardm), 0, pardm))
 
 T2D_predictions_old <- predict(posteriors_samples_old_T2D, interim) %>%
@@ -260,14 +249,14 @@ final_T2D_predictions <- final_T2D_predictions %>%
   left_join(
     T2D_predictions_old %>%
       cbind(
-        patid = modyt1d_cohort_local_clean$patid
+        patid = modyt2d_cohort_local$patid
       ) %>%
       set_names(c("mean_pardm_0", "patid"))
   )
 
 
 
-interim <- as_tibble(as.matrix(select(modyt1d_cohort_local_clean, agedx, bmi, hba1c, pardm, agerec, insoroha, sex))) %>%
+interim <- as_tibble(as.matrix(select(modyt2d_cohort_local, agedx, bmi, hba1c, pardm, agerec, insoroha, sex))) %>%
   mutate(pardm = ifelse(is.na(pardm), 1, pardm))
 
 T2D_predictions_old <- predict(posteriors_samples_old_T2D, interim) %>%
@@ -290,7 +279,7 @@ final_T2D_predictions <- final_T2D_predictions %>%
   left_join(
     T2D_predictions_old %>%
       cbind(
-        patid = modyt1d_cohort_local_clean$patid
+        patid = modyt2d_cohort_local$patid
       ) %>%
       set_names(c("mean_pardm_1", "patid"))
   )
@@ -305,7 +294,7 @@ T2D_predictions_old <- final_T2D_predictions
 ## Creating tables needed
 
 ## Take the original dataset and keep patid and calculator needed + agedx
-mody_prob_CPRD <- modyt1d_cohort_local_type1 %>%
+mody_prob_CPRD <- modyt1d_cohort_local %>%
   select(patid, which_equation, agedx) %>%
   left_join(
     T1D_predictions_old %>%
@@ -324,7 +313,7 @@ mody_prob_CPRD <- modyt1d_cohort_local_type1 %>%
     by = c("patid")
   ) %>%
   rbind(
-    modyt1d_cohort_local_type2 %>%
+    modyt2d_cohort_local %>%
       select(patid, which_equation, agedx) %>%
       left_join(
         T2D_predictions_old %>%
@@ -345,8 +334,17 @@ mody_prob_CPRD <- modyt1d_cohort_local_type1 %>%
   )
 
 
+
+## under 36s table
+under_36 <- mody_prob_CPRD %>%
+  select(which_equation, old_prob, new_prob)
+
+write.table(under_36, file = "Patient Predictions/mody_probabilities_under_36s.txt", sep = "\t",
+            row.names = FALSE)
+
 ## under 35s table
 under_35 <- mody_prob_CPRD %>%
+  filter(agedx<= 35) %>%
   select(which_equation, old_prob, new_prob)
 
 write.table(under_35, file = "Patient Predictions/mody_probabilities_under_35s.txt", sep = "\t",
@@ -354,7 +352,7 @@ write.table(under_35, file = "Patient Predictions/mody_probabilities_under_35s.t
 
 ## under 30s table
 under_30 <- mody_prob_CPRD %>%
-  filter(agedx < 30) %>%
+  filter(agedx <= 30) %>%
   select(which_equation, old_prob, new_prob)
 
 write.table(under_30, file = "Patient Predictions/mody_probabilities_under_30s.txt", sep = "\t",
